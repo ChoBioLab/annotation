@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# pass arguments from cli
+while getopts i:m: option
+do
+    case "${option}"
+        in
+        i) input=${OPTARG};;
+        m) model=${OPTARG};;
+    esac
+done
+
