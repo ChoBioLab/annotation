@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Get current timestamp
+TIMESTAMP=$(date +"%Y-%m-%d_%H.%M.%S")
+
+# Create output directory with timestamp
+OUT_DIR="output/output_$TIMESTAMP"
+mkdir -p $OUT_DIR $OUT_DIR/tmp
+export OUT_DIR
+
+# Activate conda environment
+eval "$(conda shell.bash hook)"
+
+# Declare an array of tools to install
+declare -a TOOLS=(
+"celltypist"
+)
+
+# Check if conda is installed
+if ! command -v conda &> /dev/null
+then
+    echo "conda could not be found"
+    exit
+fi
+
+# Check if celltypist environment exists. If not, create it and install tools.
+if ! conda env list | grep -q "celltypist"
+then
+    conda config --add channels defaults
+    conda config --add channels bioconda
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+    conda create --name celltypist -y
+    conda activate celltypist
+    for i in "${TOOLS[@]}"
+    do
+        conda install -y "$i"
+    done
+    conda deactivate
+fi
+

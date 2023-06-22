@@ -1,0 +1,3 @@
+absolute/path/to/sample1,0          # prepared with hg19
+absolute/path/to/sample2,0          # prepared with hg19
+absolute/path/to/sample3,1          # prepared with hg38
