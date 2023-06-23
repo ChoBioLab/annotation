@@ -1,12 +1,17 @@
 #!/bin/bash
 
+WORKERS=8
+RAM=8
+
 # pass arguments from cli
-while getopts i:m: option
+while getopts i:m:w:r: option
 do
     case "${option}"
         in
-        i) input=${OPTARG};;
-        m) model=${OPTARG};;
+        i) INPUT=${OPTARG};;
+        m) MODEL=${OPTARG};;
+        w) WORKERS=${OPTARG};;
+        r) RAM=${OPTARG};;
     esac
 done
 

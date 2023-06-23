@@ -10,9 +10,12 @@ trap on_failure ERR # Set a trap to call the on_failure function if an error occ
 source src/getopts # Source the getopts script to parse command line options
 APP_PATH=$(pwd -P) # Get the absolute path of the current working directory
 
-if [[ -z "${input:-}" || -z "{$model:-}" ]]
+echo $WORKERS
+echo $RAM
+
+if [[ -z "${INPUT:-}" || -z "{$MODEL:-}" ]]
 then
-  echo "ERROR: Both input (-i) and model (-m) arguments must be provided"
+  echo "ERROR: Both INPUT (-i) and MODEL (-m) arguments must be provided"
   exit 1
 fi
 
@@ -29,11 +32,11 @@ singularity run \
   --no-home \
   --pwd "$APP_PATH" \
   -B "$APP_PATH":"$APP_PATH" \
-  -B "${input}":"${input}" \
+  -B "${INPUT}":"${INPUT}" \
   docker://public.ecr.aws/chobiolab/seurat-base:v4-r2 \
   Rscript "$APP_PATH"/src/matrix-convert.R \
   "$APP_PATH"/"$OUT_DIR"/tmp \
-  "${input}" 2>&1 \
+  "${INPUT}" 2>&1 \
   | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
 
 echo ""
@@ -46,7 +49,7 @@ singularity run \
   docker://quay.io/teichlab/celltypist:latest \
   celltypist \
   --indata /data/"$OUT_DIR"/tmp/counts.csv \
-  --model "${model}".pkl \
+  --model "${MODEL}".pkl \
   --outdir /data/"$OUT_DIR" \
   --majority-voting 2>&1 \
   | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
@@ -60,11 +63,13 @@ singularity run \
   --no-home \
   --pwd "$APP_PATH" \
   -B "$APP_PATH":"$APP_PATH" \
-  -B "${input}":"${input}" \
+  -B "${INPUT}":"${INPUT}" \
   docker://public.ecr.aws/chobiolab/seurat-base:v4-r2 \
   Rscript "$APP_PATH"/src/apply-ann.R \
   "$APP_PATH"/"$OUT_DIR" \
-  "${input}" 2>&1 \
+  "${INPUT}" \
+  "$WORKERS" \
+  "$RAM" 2>&1 \
   | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
 
 echo ""
