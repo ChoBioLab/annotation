@@ -3,11 +3,11 @@ library(scrattch.io)
 
 args <- commandArgs(trailingOnly = TRUE)
 out_path <- paste0(args[1], "/")
-object <- readRDS(args[2])
+obj <- readRDS(args[2])
 
 # write expression counts matrix
 counts <- GetAssayData(
-  object,
+  obj,
   assay = "RNA",
   slot = "counts"
 )
