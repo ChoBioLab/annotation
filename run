@@ -1,20 +1,20 @@
 #!/bin/bash
 
-set -euo pipefail
+set -euo pipefail # Set bash options to exit on error, unset variable or failed command in a pipeline
 
 function on_failure {
-  echo "The script" "${0##*/}" "has failed"
+  echo "The script" "${0##*/}" "has failed" # Print an error message if the script fails
 }
 
-trap on_failure ERR
-source src/getopts
-APP_PATH=$(pwd -P)
+trap on_failure ERR # Set a trap to call the on_failure function if an error occurs
+source src/getopts # Source the getopts script to parse command line options
+APP_PATH=$(pwd -P) # Get the absolute path of the current working directory
 
-# housekeeping
-TIMESTAMP=$(date +"%Y-%m-%d_%H.%M.%S")
-OUT_DIR="output/output_$TIMESTAMP"
-mkdir -p "$OUT_DIR" "$OUT_DIR"/tmp
+TIMESTAMP=$(date +"%Y-%m-%d_%H.%M.%S") # Get the current date and time in a specific format
+OUT_DIR="output/output_$TIMESTAMP" # Set the output directory path
+mkdir -p "$OUT_DIR" "$OUT_DIR"/tmp # Create the output and temporary directories
 
+# Executing matrix conversion
 singularity run \
   --no-home \
   --pwd "$APP_PATH" \
@@ -26,6 +26,7 @@ singularity run \
   "${input}" 2>&1 \
   | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
 
+# Executing celltypist
 singularity run \
   -B "$APP_PATH":/data \
   docker://quay.io/teichlab/celltypist:latest \
@@ -36,6 +37,7 @@ singularity run \
   --majority-voting 2>&1 \
   | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
 
+# Executing application of predicted labels back onto input object
 singularity run \
   --no-home \
   --pwd "$APP_PATH" \
@@ -47,4 +49,5 @@ singularity run \
   "${input}" 2>&1 \
   | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
 
-rm -rf "$OUT_DIR"/tmp
+rm -rf "$OUT_DIR"/tmp # Remove the temporary directory
+
