@@ -1,0 +1,8 @@
+output_*
+tmp/
+*.Rhistory
+*.swp
+config/*.csv*
+config/env
+*.Rdata
+*.sif*
