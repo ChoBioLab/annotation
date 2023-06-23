@@ -15,6 +15,7 @@ counts <- GetAssayData(
 # write counts matrix to file in memory considerate maner
 write_dgCMatrix_csv(
   counts,
-  paste0(out_path, "counts.txt"),
+  paste0(out_path, "counts.csv"),
+  col1_name = "",
   chunk_size = 1000
 )

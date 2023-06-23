@@ -7,31 +7,33 @@ function on_failure {
 }
 
 trap on_failure ERR
-source ./src/getopts
+source src/getopts
 APP_PATH=$(pwd -P)
 
 # housekeeping
 TIMESTAMP=$(date +"%Y-%m-%d_%H.%M.%S")
 OUT_DIR="output/output_$TIMESTAMP"
-mkdir -p $OUT_DIR $OUT_DIR/tmp
+mkdir -p "$OUT_DIR" "$OUT_DIR"/tmp
 
 singularity run \
   --no-home \
-  --pwd $APP_PATH \
-  -B $APP_PATH:$APP_PATH \
+  --pwd "$APP_PATH" \
+  -B "$APP_PATH":"$APP_PATH" \
   -B "${input}":"${input}" \
   docker://public.ecr.aws/chobiolab/seurat-base:v4-r2 \
-  Rscript $APP_PATH/src/matrix-convert.R \
-  $APP_PATH/$OUT_DIR/tmp \
+  Rscript "$APP_PATH"/src/matrix-convert.R \
+  "$APP_PATH"/"$OUT_DIR"/tmp \
   "${input}" 2>&1 \
-  | tee -a $APP_PATH/$OUT_DIR/log.txt
+  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
 
 singularity run \
-  -B $APP_PATH:/data \
+  -B "$APP_PATH":/data \
   docker://quay.io/teichlab/celltypist:latest \
   celltypist \
-  --indata /data/$OUT_DIR/tmp/counts.txt \
-  --model "${model}" \
-  --outdir /data/$OUT_DIR \
+  --indata /data/"$OUT_DIR"/tmp/counts.csv \
+  --model "${model}".pkl \
+  --outdir /data/"$OUT_DIR" \
   --majority-voting 2>&1 \
-  | tee -a $APP_PATH/$OUT_DIR/log.txt
+  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+
+rm -rf "$OUT_DIR"/tmp
