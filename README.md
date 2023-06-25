@@ -25,7 +25,7 @@ git clone https://github.com/ChoBioLab/annotation.git
 
 ### Config
 1. Select a trained model [REQUIRED]
-    - https://www.celltypist.org/models | https://www.celltypist.org/organs
+    - https://www.celltypist.org/models (preloaded) | https://www.celltypist.org/organs (available as custom models)
         - Gut: `Cells_Intestinal_Tract`, `Adult_Human_Intestine` (combined)
         - Immune: `Immune_All_High`, `Immune_All_Low`
         - Liver: `Adult_Human_Liver` (combined)
@@ -41,6 +41,7 @@ git clone https://github.com/ChoBioLab/annotation.git
 
 ## Usage
 - Execution can be carried out with the `run` script and the appropriate args.
+- If you are getting an error that suggests the model isn't available, it's likely the model isn't preloaded and needs to be supplied locally.
 
 `./run`
 - `-i` *INPUT* [NULL]
@@ -51,8 +52,11 @@ git clone https://github.com/ChoBioLab/annotation.git
 ```sh
 # example
 
-cd annotation           # run should be executed from the repo path root
-./run -i /path/to/object/pbmc.RDS -m Immune_All_High
+# Preloaded models can be called by name (available models here https://www.celltypist.org/models)
+./run -i /path/to/pbmc.RDS -m Immune_All_High
+
+# Custom models can be used from a local file (some models in the CellTypist organ atlas are custom)
+./run -i /path/to/pbmc.RDS -m /path/to/Adult_Human_Intestine.pkl
 ```
 
 ### Output

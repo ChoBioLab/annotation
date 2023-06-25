@@ -10,15 +10,13 @@ trap on_failure ERR # Set a trap to call the on_failure function if an error occ
 source src/getopts # Source the getopts script to parse command line options
 APP_PATH=$(pwd -P) # Get the absolute path of the current working directory
 
-echo $WORKERS
-echo $RAM
-
-if [[ -z "${INPUT:-}" || -z "{$MODEL:-}" ]]
+if [[ -z "${INPUT:-}" || -z "${MODEL:-}" ]]
 then
   echo "ERROR: Both INPUT (-i) and MODEL (-m) arguments must be provided"
   exit 1
 fi
 
+SUFFIX="${MODEL##*.}"
 TIMESTAMP=$(date +"%Y-%m-%d_%H.%M.%S") # Get the current date and time in a specific format
 OUT_DIR="output/output_$TIMESTAMP" # Set the output directory path
 mkdir -p "$OUT_DIR" "$OUT_DIR"/tmp # Create the output and temporary directories
@@ -44,15 +42,31 @@ echo "Counts sparse matrix to expression matrix conversion complete"
 echo ""
 
 # Executing celltypist
-singularity run \
-  -B "$APP_PATH":/data \
-  docker://quay.io/teichlab/celltypist:latest \
-  celltypist \
-  --indata /data/"$OUT_DIR"/tmp/counts.csv \
-  --model "${MODEL}".pkl \
-  --outdir /data/"$OUT_DIR" \
-  --majority-voting 2>&1 \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+if [[ -f "${MODEL}" ]]
+then
+  MODEL_FILE="${MODEL##*/}"
+  MODEL_PATH="${MODEL%/*}"
+  singularity run \
+    -B "$APP_PATH":/data \
+    -B "${MODEL_PATH}":/opt/celltypist/data/models \
+    docker://quay.io/teichlab/celltypist:latest \
+    celltypist \
+    --indata /data/"$OUT_DIR"/tmp/counts.csv \
+    --model "${MODEL_FILE}" \
+    --outdir /data/"$OUT_DIR" \
+    --majority-voting 2>&1 \
+    | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+else
+  singularity run \
+    -B "$APP_PATH":/data \
+    docker://quay.io/teichlab/celltypist:latest \
+    celltypist \
+    --indata /data/"$OUT_DIR"/tmp/counts.csv \
+    --model "${MODEL}".pkl \
+    --outdir /data/"$OUT_DIR" \
+    --majority-voting 2>&1 \
+    | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+fi
 
 echo ""
 echo "CellTypist annotation prediction complete"
@@ -81,3 +95,4 @@ rm -rf "$OUT_DIR"/tmp # Remove the temporary directory
 echo ""
 echo "Annotation routine complete"
 echo ""
+
