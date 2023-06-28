@@ -92,5 +92,6 @@ table <- as.data.frame(table(preds$predicted_labels)) %>%
 # Write the conflicts data frame to a CSV file called conflict-counts.csv
 write.csv(
   table,
-  paste0(out_path, "qc.csv")
+  paste0(out_path, "qc.csv"),
+  row.names = FALSE
 )
