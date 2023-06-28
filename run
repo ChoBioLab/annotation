@@ -90,6 +90,19 @@ echo ""
 echo "Application of predicted labels back onto input object complete"
 echo ""
 
+singularity run \
+  --no-home \
+  --pwd "$APP_PATH" \
+  -B "$APP_PATH":"$APP_PATH" \
+  docker://rocker/tidyverse \
+  Rscript "$APP_PATH"/src/qc.R \
+  "$APP_PATH"/"$OUT_DIR" \
+  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+
+echo ""
+echo "QC metrics generated"
+echo ""
+
 rm -rf "$OUT_DIR"/tmp # Remove the temporary directory
 
 echo ""

@@ -8,9 +8,6 @@ obj_name <- tools::file_path_sans_ext(basename(args[2])) # Get the name of the R
 workers <- as.numeric(args[3])
 ram <- as.numeric(args[4])
 
-message(workers)
-message(ram)
-
 plan(
   multicore,
   workers = workers
