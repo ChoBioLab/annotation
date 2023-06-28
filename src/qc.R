@@ -3,9 +3,21 @@ library(dplyr)
 args <- commandArgs(trailingOnly = TRUE) # Get the command line arguments
 out_path <- paste0(args[1], "/") # Set the output path
 
-preds <- read.csv(paste0(out_path, "predicted_labels.csv"), row.names = 1)
-dec_matrix <- read.csv(paste0(out_path, "decision_matrix.csv"), row.names = 1)
-prob_matrix <- read.csv(paste0(out_path, "probability_matrix.csv"), row.names = 1)
+preds <- read.csv(
+  paste0(out_path, "predicted_labels.csv"),
+  check.names = FALSE,
+  row.names = 1
+)
+dec_matrix <- read.csv(
+  paste0(out_path, "decision_matrix.csv"),
+  check.names = FALSE,
+  row.names = 1
+)
+prob_matrix <- read.csv(
+  paste0(out_path, "probability_matrix.csv"),
+  check.names = FALSE,
+  row.names = 1
+)
 
 # Create a new data frame called prob_medians
 prob_medians <- prob_matrix %>%
@@ -51,26 +63,34 @@ conflicts <- dec_matrix %>%
     )
   )
 
-# Transpose the data frame and rename the column to conflicts
-conflicts <- as.data.frame(t(conflicts)) %>%
-  rename(conflicts = V1)
+# Transpose the conflicts data frame and rename the first column to "conflicts"
+conflicts <- as.data.frame(t(conflicts))
 
-# Write the counts of predicted labels to a CSV file called cell-counts.csv
-write.csv(
-  as.data.frame(table(preds$predicted_labels)),
-  paste0(out_path, "cell-counts.csv"),
-  row.names = FALSE
-)
-
-# Write the prob_medians data frame to a CSV file called probability-medians.csv
-write.csv(
-  prob_medians,
-  paste0(out_path, "probability-medians.csv")
-)
+# Create a table from the predicted labels in the preds data frame
+table <- as.data.frame(table(preds$predicted_labels)) %>%
+  # Merge with the prob_medians data frame, matching on the row names
+  merge(
+    prob_medians,
+    by.x = "Var1",
+    by.y = "row.names"
+  ) %>%
+  # Merge with the conflicts data frame, matching on the row names
+  merge(
+    conflicts,
+    by.x = "Var1",
+    by.y = "row.names"
+  ) %>%
+  # Rename columns for clarity
+  rename(
+    cell_type = Var1,
+    cell_count = Freq,
+    conflict_count = V1
+  ) %>%
+  # Calculate the proportion of conflicts for each cell type
+  mutate(conflict_proportion = conflict_count / cell_count)
 
 # Write the conflicts data frame to a CSV file called conflict-counts.csv
 write.csv(
-  conflicts,
-  paste0(out_path, "conflict-counts.csv")
+  table,
+  paste0(out_path, "qc.csv")
 )
-
