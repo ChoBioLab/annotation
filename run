@@ -3,7 +3,7 @@
 set -euo pipefail # Set bash options to exit on error, unset variable or failed command in a pipeline
 
 function on_failure {
-  echo "The script" "${0##*/}" "has failed" 2>&1 \ # Print an error message if the script fails
+  echo "The script" "${0##*/}" "has failed" 2>&1 \
   | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
 }
 
@@ -100,7 +100,7 @@ singularity run \
   --no-home \
   --pwd "$APP_PATH" \
   -B "$APP_PATH":"$APP_PATH" \
-  docker://rocker/tidyverse:latest \
+  docker://public.ecr.aws/chobiolab/seurat-base:v4-r2 \
   Rscript "$APP_PATH"/src/qc.R \
   "$APP_PATH"/"$OUT_DIR" \
   | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
