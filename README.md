@@ -71,6 +71,21 @@ output_2023-06-23_13.19.45/
 └── qc.csv                          # some QC metrics
 ```
 
+#### qc.csv
+```sh
+- cell_count
+  - number of predicted cells by type
+- probability_median
+  - median value of filtered prediction probabilities to > 50% (i.e. positive decision tree values)
+  - lower values indicate lower confidence in prediction
+- conflict_count
+  - number of instances a positive value occurs with a corresponding positive value for a barcode
+  - high values indicate more discrepancies in prediction
+- conflict_proportion
+  - fraction of barcodes which experience prediction conflicts
+  - high values indicate more discrepancies in prediction
+```
+
 ### File Tree
 ```sh
 annotation/
