@@ -67,7 +67,8 @@ output_2023-06-23_13.19.45/
 ├── decision_matrix.csv             # CellTypist output
 ├── pbmc-annd_2023-06-23.RDS        # input obj annotated with predicted_labels.csv fields
 ├── predicted_labels.csv            # CellTypist output
-└── probability_matrix.csv          # CellTypist output
+├── probability_matrix.csv          # CellTypist output
+└── qc.csv                          # some QC metrics
 ```
 
 ### File Tree
@@ -78,5 +79,6 @@ annotation/
 └── src
     ├── apply-ann.R         # application of predicted labels to input and find DEGs
     ├── getopts             # run script arguments
-    └── matrix-convert.R    # routine to extract and prepare raw counts matrix
+    ├── matrix-convert.R    # routine to extract and prepare raw counts matrix
+    └── qc.R                # method to assempble QC table
 ```
