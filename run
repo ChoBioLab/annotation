@@ -4,7 +4,7 @@ set -euo pipefail # Set bash options to exit on error, unset variable or failed 
 
 function on_failure {
   echo "The script" "${0##*/}" "has failed" 2>&1 \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+  | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 }
 
 trap on_failure ERR # Set a trap to call the on_failure function if an error occurs
@@ -14,18 +14,18 @@ APP_PATH=$(pwd -P) # Get the absolute path of the current working directory
 if [[ -z "${INPUT:-}" || -z "${MODEL:-}" ]]
 then
   echo "ERROR: Both INPUT (-i) and MODEL (-m) arguments must be provided" 2>&1 \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+  | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
   exit 1
 fi
 
 SUFFIX="${MODEL##*.}"
 TIMESTAMP=$(date +"%Y-%m-%d_%H.%M.%S") # Get the current date and time in a specific format
-OUT_DIR="output/output_$TIMESTAMP" # Set the output directory path
-mkdir -p "$OUT_DIR" "$OUT_DIR"/tmp # Create the output and temporary directories
+ANN_OUT_DIR="output/output_$TIMESTAMP" # Set the output directory path
+mkdir -p "$ANN_OUT_DIR" "$ANN_OUT_DIR"/tmp # Create the output and temporary directories
 
 echo ""
 echo "Housekeeping complete" 2>&1 \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+  | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 echo ""
 
 # Executing matrix conversion
@@ -36,13 +36,13 @@ singularity run \
   -B "${INPUT}":"${INPUT}" \
   docker://public.ecr.aws/chobiolab/seurat-base:v4-r2 \
   Rscript "$APP_PATH"/src/matrix-convert.R \
-  "$APP_PATH"/"$OUT_DIR"/tmp \
+  "$APP_PATH"/"$ANN_OUT_DIR"/tmp \
   "${INPUT}" 2>&1 \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+  | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 
 echo ""
 echo "Counts sparse matrix to expression matrix conversion complete" 2>&1 \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+  | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 echo ""
 
 # Executing celltypist
@@ -55,26 +55,26 @@ then
     -B "${MODEL_PATH}":/opt/celltypist/data/models \
     docker://quay.io/teichlab/celltypist:latest \
     celltypist \
-    --indata /data/"$OUT_DIR"/tmp/counts.csv \
+    --indata /data/"$ANN_OUT_DIR"/tmp/counts.csv \
     --model "${MODEL_FILE}" \
-    --outdir /data/"$OUT_DIR" \
+    --outdir /data/"$ANN_OUT_DIR" \
     --majority-voting 2>&1 \
-    | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+    | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 else
   singularity run \
     -B "$APP_PATH":/data \
     docker://quay.io/teichlab/celltypist:latest \
     celltypist \
-    --indata /data/"$OUT_DIR"/tmp/counts.csv \
+    --indata /data/"$ANN_OUT_DIR"/tmp/counts.csv \
     --model "${MODEL}".pkl \
-    --outdir /data/"$OUT_DIR" \
+    --outdir /data/"$ANN_OUT_DIR" \
     --majority-voting 2>&1 \
-    | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+    | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 fi
 
 echo ""
 echo "CellTypist annotation prediction complete" 2>&1 \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+  | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 echo ""
 
 # Executing application of predicted labels back onto input object
@@ -85,15 +85,15 @@ singularity run \
   -B "${INPUT}":"${INPUT}" \
   docker://public.ecr.aws/chobiolab/seurat-base:v4-r2 \
   Rscript "$APP_PATH"/src/apply-ann.R \
-  "$APP_PATH"/"$OUT_DIR" \
+  "$APP_PATH"/"$ANN_OUT_DIR" \
   "${INPUT}" \
   "$WORKERS" \
   "$RAM" 2>&1 \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+  | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 
 echo ""
 echo "Application of predicted labels back onto input object complete" 2>&1 \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+  | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 echo ""
 
 singularity run \
@@ -102,18 +102,18 @@ singularity run \
   -B "$APP_PATH":"$APP_PATH" \
   docker://public.ecr.aws/chobiolab/seurat-base:v4-r2 \
   Rscript "$APP_PATH"/src/qc.R \
-  "$APP_PATH"/"$OUT_DIR" \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+  "$APP_PATH"/"$ANN_OUT_DIR" \
+  | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 
 echo ""
 echo "QC metrics generated" 2>&1 \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+  | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 echo ""
 
-rm -rf "$OUT_DIR"/tmp # Remove the temporary directory
+rm -rf "$ANN_OUT_DIR"/tmp # Remove the temporary directory
 
 echo ""
 echo "Annotation routine complete" 2>&1 \
-  | tee -a "$APP_PATH"/"$OUT_DIR"/celltypist-log.txt
+  | tee -a "$APP_PATH"/"$ANN_OUT_DIR"/celltypist-log.txt
 echo ""
 
